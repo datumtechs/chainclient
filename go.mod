@@ -1,4 +1,4 @@
-module github.com/bglmmz/chianclient
+module github.com/bglmmz/chainclient
 
 go 1.17
 
