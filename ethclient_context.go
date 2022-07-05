@@ -3,11 +3,13 @@ package chainclient
 import (
 	"context"
 	"crypto/ecdsa"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"log"
 	"math/big"
+	"time"
 )
 
 type EthContext struct {
@@ -48,6 +50,18 @@ func (ctx *EthContext) GetWalletAddress() common.Address {
 
 func (ctx *EthContext) GetClient() *ethclient.Client {
 	return ctx.client
+}
+func (ctx *EthContext) EstimateGas(from common.Address, to *common.Address, input []byte, gas uint64, gasPrice *big.Int) (uint64, error) {
+	msg := ethereum.CallMsg{From: from, To: to, Data: input, Gas: gas, GasPrice: gasPrice}
+	timeout := time.Duration(500) * time.Millisecond
+	backendCtx, cancelFn := context.WithTimeout(context.Background(), timeout)
+	defer cancelFn()
+
+	estimatedGas, err := ctx.client.EstimateGas(backendCtx, msg)
+	if err != nil {
+		return 0, err
+	}
+	return estimatedGas, nil
 }
 
 func (ctx *EthContext) BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpts, error) {
