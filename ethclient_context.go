@@ -1,6 +1,7 @@
 package chainclient
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"github.com/ethereum/go-ethereum"
@@ -54,17 +55,22 @@ func (ctx *EthContext) GetClient() *ethclient.Client {
 }
 
 // EstimateGas uses context's wallet address as the caller (from)
-func (ctx *EthContext) EstimateGas(to *common.Address, input []byte, gas uint64, gasPrice *big.Int) (uint64, error) {
-	msg := ethereum.CallMsg{From: ctx.walletAddress, To: to, Data: input, Gas: gas, GasPrice: gasPrice}
-	timeout := time.Duration(500) * time.Millisecond
-	backendCtx, cancelFn := context.WithTimeout(context.Background(), timeout)
-	defer cancelFn()
-
-	estimatedGas, err := ctx.client.EstimateGas(backendCtx, msg)
+func (ctx *EthContext) EstimateGas(timeoutCtx context.Context, to common.Address, input []byte, gas uint64, gasPrice *big.Int) (uint64, error) {
+	msg := ethereum.CallMsg{From: ctx.walletAddress, To: &to, Data: input, Gas: gas, GasPrice: gasPrice}
+	estimatedGas, err := ctx.client.EstimateGas(timeoutCtx, msg)
 	if err != nil {
 		return 0, err
 	}
 	return estimatedGas, nil
+}
+
+func (ctx *EthContext) CallContract(timeoutCtx context.Context, to common.Address, input []byte) ([]byte, error) {
+	msg := ethereum.CallMsg{From: ctx.walletAddress, To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
+	res, err := ctx.client.CallContract(timeoutCtx, msg, nil)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (ctx *EthContext) BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpts, error) {
@@ -91,7 +97,7 @@ func (ctx *EthContext) BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpts, 
 	return txOpts, nil
 }
 
-func (ctx *EthContext) GetReceipt(timeoutCtx context.Context, txHash common.Hash, interval time.Duration) *types.Receipt {
+func (ctx *EthContext) WaitReceipt(timeoutCtx context.Context, txHash common.Hash, interval time.Duration) *types.Receipt {
 	fetchReceipt := func(txHash common.Hash) (*types.Receipt, error) {
 		receipt, err := ctx.client.TransactionReceipt(context.Background(), txHash)
 		if nil != err {
@@ -126,4 +132,32 @@ func (ctx *EthContext) GetReceipt(timeoutCtx context.Context, txHash common.Hash
 			}
 		}
 	}
+}
+
+func (ctx *EthContext) GetLog(timeoutCtx context.Context, toAddr common.Address, blockNo *big.Int) []*types.Log {
+	block, err := ctx.client.BlockByNumber(timeoutCtx, blockNo)
+	if err != nil {
+		log.Printf("get block error, block: %d, error: %v", blockNo.Uint64(), err)
+		return nil
+	}
+	if block == nil {
+		log.Printf("block not found, block: %d", blockNo.Uint64())
+		return nil
+	}
+
+	logs := make([]*types.Log, 0)
+
+	for _, tx := range block.Transactions() {
+		if bytes.Compare(tx.To().Bytes(), toAddr.Bytes()) != 0 {
+			continue
+		}
+		receipt, err := ctx.client.TransactionReceipt(timeoutCtx, tx.Hash())
+		if err != nil {
+			log.Printf("get tx receipt error, block: %d, txHash: %s, error: %v", blockNo.Uint64(), tx.Hash(), err)
+			return nil
+		}
+		logs = append(logs, receipt.Logs...)
+	}
+
+	return logs
 }
