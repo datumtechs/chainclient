@@ -15,7 +15,11 @@ type Context interface {
 	GetPrivateKey() *ecdsa.PrivateKey
 	GetWalletAddress() common.Address
 	GetClient() *ethclient.Client
-	EstimateGas(timeoutCtx context.Context, to common.Address, data []byte, gas uint64, gasPrice *big.Int) (uint64, error)
+	BlockNumber(timeoutCtx context.Context) (uint64, error)
+	PendingNonceAt(timeoutCtx context.Context) (uint64, error)
+	SuggestGasPrice(timeoutCtx context.Context) (*big.Int, error)
+
+	EstimateGas(timeoutCtx context.Context, to common.Address, data []byte) (uint64, error)
 	CallContract(timeoutCtx context.Context, to common.Address, data []byte) ([]byte, error)
 
 	BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpts, error)

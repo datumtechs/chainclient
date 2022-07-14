@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"log"
 	"math/big"
@@ -22,11 +23,11 @@ type EthContext struct {
 	chainID       *big.Int
 }
 
-func NewEthClientContext(chainUrl string, priKey *ecdsa.PrivateKey, addr common.Address) *EthContext {
+func NewEthClientContext(chainUrl string, priKey *ecdsa.PrivateKey) *EthContext {
 	ctx := new(EthContext)
 	ctx.chainUrl = chainUrl
 	ctx.privateKey = priKey
-	ctx.walletAddress = addr
+	ctx.walletAddress = crypto.PubkeyToAddress(priKey.PublicKey)
 
 	client, err := ethclient.Dial(chainUrl)
 	if err != nil {
@@ -46,17 +47,35 @@ func (ctx *EthContext) GetPrivateKey() *ecdsa.PrivateKey {
 	return ctx.privateKey
 }
 
+func (ctx *EthContext) SetPrivateKey(priKey *ecdsa.PrivateKey) {
+	ctx.privateKey = priKey
+}
+
 func (ctx *EthContext) GetWalletAddress() common.Address {
 	return ctx.walletAddress
+}
+func (ctx *EthContext) SetWalletAddress(walletAddress common.Address) {
+	ctx.walletAddress = walletAddress
 }
 
 func (ctx *EthContext) GetClient() *ethclient.Client {
 	return ctx.client
 }
 
+func (ctx *EthContext) PendingNonceAt(timeoutCtx context.Context) (uint64, error) {
+	return ctx.client.PendingNonceAt(timeoutCtx, ctx.walletAddress)
+}
+func (ctx *EthContext) SuggestGasPrice(timeoutCtx context.Context) (*big.Int, error) {
+	return ctx.client.SuggestGasPrice(timeoutCtx)
+}
+
+func (ctx *EthContext) BlockNumber(timeoutCtx context.Context) (uint64, error) {
+	return ctx.client.BlockNumber(timeoutCtx)
+}
+
 // EstimateGas uses context's wallet address as the caller (from)
-func (ctx *EthContext) EstimateGas(timeoutCtx context.Context, to common.Address, input []byte, gas uint64, gasPrice *big.Int) (uint64, error) {
-	msg := ethereum.CallMsg{From: ctx.walletAddress, To: &to, Data: input, Gas: gas, GasPrice: gasPrice}
+func (ctx *EthContext) EstimateGas(timeoutCtx context.Context, to common.Address, input []byte) (uint64, error) {
+	msg := ethereum.CallMsg{From: ctx.walletAddress, To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
 	estimatedGas, err := ctx.client.EstimateGas(timeoutCtx, msg)
 	if err != nil {
 		return 0, err
