@@ -3,6 +3,7 @@ package chainclient
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -40,9 +41,14 @@ func NewEthClientContext(chainUrl string, wallet Wallet) *EthContext {
 func (ctx *EthContext) GetClient() *ethclient.Client {
 	return ctx.client
 }
-
+func (ctx *EthContext) GetPrivateKey() *ecdsa.PrivateKey {
+	return ctx.wallet.GetPrivateKey()
+}
+func (ctx *EthContext) GetAddress() common.Address {
+	return ctx.wallet.GetAddress()
+}
 func (ctx *EthContext) PendingNonceAt(timeoutCtx context.Context) (uint64, error) {
-	return ctx.client.PendingNonceAt(timeoutCtx, ctx.wallet.GetAddress())
+	return ctx.client.PendingNonceAt(timeoutCtx, ctx.GetAddress())
 }
 func (ctx *EthContext) SuggestGasPrice(timeoutCtx context.Context) (*big.Int, error) {
 	return ctx.client.SuggestGasPrice(timeoutCtx)
@@ -54,7 +60,7 @@ func (ctx *EthContext) BlockNumber(timeoutCtx context.Context) (uint64, error) {
 
 // EstimateGas uses context's wallet address as the caller (from)
 func (ctx *EthContext) EstimateGas(timeoutCtx context.Context, to common.Address, input []byte) (uint64, error) {
-	msg := ethereum.CallMsg{From: ctx.wallet.GetAddress(), To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
+	msg := ethereum.CallMsg{From: ctx.GetAddress(), To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
 	estimatedGas, err := ctx.client.EstimateGas(timeoutCtx, msg)
 	if err != nil {
 		return 0, err
@@ -63,7 +69,7 @@ func (ctx *EthContext) EstimateGas(timeoutCtx context.Context, to common.Address
 }
 
 func (ctx *EthContext) CallContract(timeoutCtx context.Context, to common.Address, input []byte) ([]byte, error) {
-	msg := ethereum.CallMsg{From: ctx.wallet.GetAddress(), To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
+	msg := ethereum.CallMsg{From: ctx.GetAddress(), To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
 	res, err := ctx.client.CallContract(timeoutCtx, msg, nil)
 	if err != nil {
 		return nil, err
@@ -72,7 +78,7 @@ func (ctx *EthContext) CallContract(timeoutCtx context.Context, to common.Addres
 }
 
 func (ctx *EthContext) BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpts, error) {
-	nonce, err := ctx.client.PendingNonceAt(context.Background(), ctx.wallet.GetAddress())
+	nonce, err := ctx.client.PendingNonceAt(context.Background(), ctx.GetAddress())
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +89,7 @@ func (ctx *EthContext) BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpts, 
 	}
 
 	//txOpts := bind.NewKeyedTransactor(m.Config.privateKey)
-	txOpts, err := bind.NewKeyedTransactorWithChainID(ctx.wallet.GetPrivateKey(), ctx.chainID)
+	txOpts, err := bind.NewKeyedTransactorWithChainID(ctx.GetPrivateKey(), ctx.chainID)
 	if err != nil {
 		return nil, err
 	}
