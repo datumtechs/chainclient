@@ -7,5 +7,6 @@ import (
 
 type Wallet interface {
 	GetPrivateKey() *ecdsa.PrivateKey
+	GetPublicKey() ecdsa.PublicKey
 	GetAddress() common.Address
 }

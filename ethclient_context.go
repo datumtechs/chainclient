@@ -44,6 +44,10 @@ func (ctx *EthContext) GetClient() *ethclient.Client {
 func (ctx *EthContext) GetPrivateKey() *ecdsa.PrivateKey {
 	return ctx.wallet.GetPrivateKey()
 }
+func (ctx *EthContext) GetPublicKey() ecdsa.PublicKey {
+	return ctx.wallet.GetPublicKey()
+}
+
 func (ctx *EthContext) GetAddress() common.Address {
 	return ctx.wallet.GetAddress()
 }
