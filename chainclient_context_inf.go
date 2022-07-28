@@ -13,6 +13,7 @@ import (
 
 type Context interface {
 	GetPrivateKey() *ecdsa.PrivateKey
+	GetPublicKey() *ecdsa.PublicKey
 	GetAddress() common.Address
 	GetClient() *ethclient.Client
 	BlockNumber(timeoutCtx context.Context) (uint64, error)

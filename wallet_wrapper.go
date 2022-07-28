@@ -5,8 +5,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type Wallet interface {
+type WalletWrapper interface {
 	GetPrivateKey() *ecdsa.PrivateKey
-	GetPublicKey() ecdsa.PublicKey
+	GetPublicKey() *ecdsa.PublicKey
 	GetAddress() common.Address
 }
