@@ -2,7 +2,6 @@ package chainclient
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -12,8 +11,6 @@ import (
 )
 
 type Context interface {
-	GetPrivateKey() *ecdsa.PrivateKey
-	GetWalletAddress() common.Address
 	GetClient() *ethclient.Client
 	BlockNumber(timeoutCtx context.Context) (uint64, error)
 	PendingNonceAt(timeoutCtx context.Context) (uint64, error)

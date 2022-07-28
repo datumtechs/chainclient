@@ -66,12 +66,12 @@ func Test_json(t *testing.T) {
 
 	// --
 	s1 := "[{\"Name\":\"ross\",\"Age\":11},{\"Name\":\"Joey\",\"Age\":21}]"
-	p1 := make([]Person, 0)
+	p1 := make([]*Person, 0)
 	err = json.Unmarshal([]byte(s1), &p1)
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	} else {
-		t.Log(p1)
+		t.Logf("p0:%+v, p1:%+v", p1[0], p1[1])
 	}
 
 	s2 := "[{\"Name\":\"ross\",\"Age\":11}]"
