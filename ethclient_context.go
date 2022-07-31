@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	platoncommon "github.com/PlatONnetwork/PlatON-Go/common"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,10 +19,11 @@ type EthContext struct {
 	chainUrl      string
 	client        *ethclient.Client
 	chainID       *big.Int
+	hrp           string
 	walletWrapper WalletWrapper
 }
 
-func NewEthClientContext(chainUrl string, wallet WalletWrapper) *EthContext {
+func NewEthClientContext(chainUrl string, hrp string, wallet WalletWrapper) *EthContext {
 	ctx := new(EthContext)
 	ctx.walletWrapper = wallet
 
@@ -38,6 +40,8 @@ func NewEthClientContext(chainUrl string, wallet WalletWrapper) *EthContext {
 
 		ctx.client = client
 		ctx.chainID = chainID
+		ctx.hrp = hrp
+		platoncommon.SetAddressHRP(hrp)
 	}
 	return ctx
 }
@@ -48,6 +52,11 @@ func (ctx *EthContext) GetClient() *ethclient.Client {
 func (ctx *EthContext) GetPrivateKey() *ecdsa.PrivateKey {
 	return ctx.walletWrapper.GetPrivateKey()
 }
+
+func (ctx *EthContext) SetPrivateKey(privateKey *ecdsa.PrivateKey) {
+	ctx.walletWrapper.SetPrivateKey(privateKey)
+}
+
 func (ctx *EthContext) GetPublicKey() *ecdsa.PublicKey {
 	return ctx.walletWrapper.GetPublicKey()
 }

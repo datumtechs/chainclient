@@ -12,6 +12,7 @@ import (
 )
 
 type Context interface {
+	SetPrivateKey(*ecdsa.PrivateKey)
 	GetPrivateKey() *ecdsa.PrivateKey
 	GetPublicKey() *ecdsa.PublicKey
 	GetAddress() common.Address

@@ -6,6 +6,7 @@ import (
 )
 
 type WalletWrapper interface {
+	SetPrivateKey(privateKey *ecdsa.PrivateKey)
 	GetPrivateKey() *ecdsa.PrivateKey
 	GetPublicKey() *ecdsa.PublicKey
 	GetAddress() common.Address
