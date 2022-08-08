@@ -3,10 +3,10 @@ package chainclient
 import (
 	"context"
 	"crypto/ecdsa"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/PlatONnetwork/PlatON-Go/accounts/abi/bind"
+	"github.com/PlatONnetwork/PlatON-Go/common"
+	"github.com/PlatONnetwork/PlatON-Go/core/types"
+	"github.com/PlatONnetwork/PlatON-Go/ethclient"
 	"math/big"
 	"time"
 )

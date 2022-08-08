@@ -2,7 +2,7 @@ package chainclient
 
 import (
 	"crypto/ecdsa"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/PlatONnetwork/PlatON-Go/common"
 )
 
 type WalletWrapper interface {
