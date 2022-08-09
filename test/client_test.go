@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"golang.org/x/crypto/sha3"
 	"io"
 	"testing"
@@ -130,7 +130,7 @@ func Test_sha3(t *testing.T) {
 func Test_sign(t *testing.T) {
 	text := "this is a test"
 	hash := getSHA3(text)
-	key, _ := crypto.GenerateKey()
+	key, _ := ethcrypto.GenerateKey()
 	pubKey := key.PublicKey
 	signed, err := key.Sign(rand.Reader, []byte(hash), nil)
 	if err != nil {
@@ -161,11 +161,11 @@ func Test_sign(t *testing.T) {
 	isf := ecdsa.Verify(&pubKey, []byte(hash), r, s)
 	t.Logf("ecdsa.Verify:%t", isf)
 
-	hashKeccak256 := crypto.Keccak256([]byte(hash))
-	sig, _ := crypto.Sign(hashKeccak256, key)
+	hashKeccak256 := ethcrypto.Keccak256([]byte(hash))
+	sig, _ := ethcrypto.Sign(hashKeccak256, key)
 	t.Logf("sig:%s", hex.EncodeToString(sig))
 
-	b := crypto.VerifySignature(crypto.FromECDSAPub(&pubKey), hashKeccak256, sig[:len(sig)-1])
+	b := ethcrypto.VerifySignature(ethcrypto.FromECDSAPub(&pubKey), hashKeccak256, sig[:len(sig)-1])
 	t.Logf("crypto.VerifySignature:%t", b)
 }
 

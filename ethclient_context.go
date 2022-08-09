@@ -1,20 +1,20 @@
 package chainclient
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"github.com/PlatONnetwork/PlatON-Go"
-	"github.com/PlatONnetwork/PlatON-Go/accounts/abi/bind"
-	"github.com/PlatONnetwork/PlatON-Go/common"
-	"github.com/PlatONnetwork/PlatON-Go/core/types"
-	"github.com/PlatONnetwork/PlatON-Go/ethclient"
+	platoncommon "github.com/PlatONnetwork/PlatON-Go/common"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	ethcommon "github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"log"
 	"math/big"
 	"time"
 )
 
-type PlatonContext struct {
+type EthContext struct {
 	chainUrl      string
 	client        *ethclient.Client
 	chainID       *big.Int
@@ -22,16 +22,14 @@ type PlatonContext struct {
 	walletWrapper WalletWrapper
 }
 
-func NewPlatonClientContext(chainUrl string, hrp string, wallet WalletWrapper) *PlatonContext {
-	ctx := new(PlatonContext)
+func NewEthClientContext(chainUrl string, hrp string, wallet WalletWrapper) *EthContext {
+	ctx := new(EthContext)
 	ctx.walletWrapper = wallet
 
 	if len(chainUrl) > 0 {
 		ctx.chainUrl = chainUrl
 		client, err := ethclient.Dial(chainUrl)
-		if err != nil {
-			log.Fatal(err)
-		}
+
 		chainID, err := client.ChainID(context.Background())
 		if err != nil {
 			log.Fatal(err)
@@ -40,43 +38,43 @@ func NewPlatonClientContext(chainUrl string, hrp string, wallet WalletWrapper) *
 		ctx.client = client
 		ctx.chainID = chainID
 		ctx.hrp = hrp
-		common.SetAddressHRP(hrp)
+		platoncommon.SetAddressHRP(hrp)
 	}
 	return ctx
 }
 
-func (ctx *PlatonContext) GetClient() *ethclient.Client {
+func (ctx *EthContext) GetClient() *ethclient.Client {
 	return ctx.client
 }
-func (ctx *PlatonContext) GetPrivateKey() *ecdsa.PrivateKey {
+func (ctx *EthContext) GetPrivateKey() *ecdsa.PrivateKey {
 	return ctx.walletWrapper.GetPrivateKey()
 }
 
-func (ctx *PlatonContext) SetPrivateKey(privateKey *ecdsa.PrivateKey) {
+func (ctx *EthContext) SetPrivateKey(privateKey *ecdsa.PrivateKey) {
 	ctx.walletWrapper.SetPrivateKey(privateKey)
 }
 
-func (ctx *PlatonContext) GetPublicKey() *ecdsa.PublicKey {
+func (ctx *EthContext) GetPublicKey() *ecdsa.PublicKey {
 	return ctx.walletWrapper.GetPublicKey()
 }
 
-func (ctx *PlatonContext) GetAddress() common.Address {
+func (ctx *EthContext) GetAddress() ethcommon.Address {
 	return ctx.walletWrapper.GetAddress()
 }
-func (ctx *PlatonContext) PendingNonceAt(timeoutCtx context.Context) (uint64, error) {
+func (ctx *EthContext) PendingNonceAt(timeoutCtx context.Context) (uint64, error) {
 	return ctx.client.PendingNonceAt(timeoutCtx, ctx.GetAddress())
 }
-func (ctx *PlatonContext) SuggestGasPrice(timeoutCtx context.Context) (*big.Int, error) {
+func (ctx *EthContext) SuggestGasPrice(timeoutCtx context.Context) (*big.Int, error) {
 	return ctx.client.SuggestGasPrice(timeoutCtx)
 }
 
-func (ctx *PlatonContext) BlockNumber(timeoutCtx context.Context) (uint64, error) {
+func (ctx *EthContext) BlockNumber(timeoutCtx context.Context) (uint64, error) {
 	return ctx.client.BlockNumber(timeoutCtx)
 }
 
 // EstimateGas uses context's walletWrapper address as the caller (from)
-func (ctx *PlatonContext) EstimateGas(timeoutCtx context.Context, to common.Address, input []byte) (uint64, error) {
-	msg := platon.CallMsg{From: ctx.GetAddress(), To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
+func (ctx *EthContext) EstimateGas(timeoutCtx context.Context, to ethcommon.Address, input []byte) (uint64, error) {
+	msg := ethereum.CallMsg{From: ctx.GetAddress(), To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
 	estimatedGas, err := ctx.client.EstimateGas(timeoutCtx, msg)
 	if err != nil {
 		return 0, err
@@ -84,8 +82,8 @@ func (ctx *PlatonContext) EstimateGas(timeoutCtx context.Context, to common.Addr
 	return estimatedGas, nil
 }
 
-func (ctx *PlatonContext) CallContract(timeoutCtx context.Context, to common.Address, input []byte) ([]byte, error) {
-	msg := platon.CallMsg{From: ctx.GetAddress(), To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
+func (ctx *EthContext) CallContract(timeoutCtx context.Context, to ethcommon.Address, input []byte) ([]byte, error) {
+	msg := ethereum.CallMsg{From: ctx.GetAddress(), To: &to, Data: input, Gas: 0, GasPrice: big.NewInt(0)}
 	res, err := ctx.client.CallContract(timeoutCtx, msg, nil)
 	if err != nil {
 		return nil, err
@@ -93,7 +91,7 @@ func (ctx *PlatonContext) CallContract(timeoutCtx context.Context, to common.Add
 	return res, nil
 }
 
-func (ctx *PlatonContext) BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpts, error) {
+func (ctx *EthContext) BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpts, error) {
 	nonce, err := ctx.client.PendingNonceAt(context.Background(), ctx.GetAddress())
 	if err != nil {
 		return nil, err
@@ -117,8 +115,8 @@ func (ctx *PlatonContext) BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpt
 	return txOpts, nil
 }
 
-func (ctx *PlatonContext) WaitReceipt(timeoutCtx context.Context, txHash common.Hash, interval time.Duration) *types.Receipt {
-	fetchReceipt := func(txHash common.Hash) (*types.Receipt, error) {
+func (ctx *EthContext) WaitReceipt(timeoutCtx context.Context, txHash ethcommon.Hash, interval time.Duration) *ethtypes.Receipt {
+	fetchReceipt := func(txHash ethcommon.Hash) (*ethtypes.Receipt, error) {
 		receipt, err := ctx.client.TransactionReceipt(context.Background(), txHash)
 		if nil != err {
 			//including NotFound
@@ -154,7 +152,21 @@ func (ctx *PlatonContext) WaitReceipt(timeoutCtx context.Context, txHash common.
 	}
 }
 
-func (ctx *PlatonContext) GetLog(timeoutCtx context.Context, toAddr common.Address, blockNo *big.Int) []*types.Log {
+func (ctx *EthContext) GetLog(timeoutCtx context.Context, toAddr ethcommon.Address, blockNo *big.Int) []ethtypes.Log {
+	q := ethereum.FilterQuery{}
+	q.FromBlock = blockNo
+	q.ToBlock = blockNo
+	q.Addresses = []ethcommon.Address{toAddr}
+
+	logs, err := ctx.client.FilterLogs(timeoutCtx, q)
+	if err != nil {
+		log.Printf("get block error, block: %d, error: %v", blockNo.Uint64(), err)
+		return nil
+	}
+	return logs
+}
+
+/*func (ctx *EthContext) GetLog(timeoutCtx context.Context, toAddr common.Address, blockNo *big.Int) []*types.Log {
 	block, err := ctx.client.BlockByNumber(timeoutCtx, blockNo)
 	if err != nil {
 		log.Printf("get block error, block: %d, error: %v", blockNo.Uint64(), err)
@@ -181,3 +193,4 @@ func (ctx *PlatonContext) GetLog(timeoutCtx context.Context, toAddr common.Addre
 
 	return logs
 }
+*/
