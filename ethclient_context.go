@@ -153,17 +153,12 @@ func (ctx *EthContext) WaitReceipt(timeoutCtx context.Context, txHash ethcommon.
 }
 
 func (ctx *EthContext) GetLog(timeoutCtx context.Context, toAddr ethcommon.Address, blockNo *big.Int) ([]ethtypes.Log, error) {
-	time.Sleep(6 * time.Second)
 	q := ethereum.FilterQuery{}
 	q.FromBlock = blockNo
 	q.ToBlock = blockNo
 	q.Addresses = []ethcommon.Address{toAddr}
 
-	logs, err := ctx.client.FilterLogs(timeoutCtx, q)
-	if err != nil {
-		return nil, err
-	}
-	return logs, nil
+	return ctx.client.FilterLogs(timeoutCtx, q)
 }
 
 /*func (ctx *EthContext) GetLog(timeoutCtx context.Context, toAddr common.Address, blockNo *big.Int) []*types.Log {
