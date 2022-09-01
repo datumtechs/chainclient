@@ -152,7 +152,8 @@ func (ctx *EthContext) WaitReceipt(timeoutCtx context.Context, txHash ethcommon.
 	}
 }
 
-func (ctx *EthContext) GetLog(timeoutCtx context.Context, toAddr ethcommon.Address, blockNo *big.Int) []ethtypes.Log {
+func (ctx *EthContext) GetLog(timeoutCtx context.Context, toAddr ethcommon.Address, blockNo *big.Int) ([]ethtypes.Log, error) {
+	time.Sleep(6 * time.Second)
 	q := ethereum.FilterQuery{}
 	q.FromBlock = blockNo
 	q.ToBlock = blockNo
@@ -160,10 +161,9 @@ func (ctx *EthContext) GetLog(timeoutCtx context.Context, toAddr ethcommon.Addre
 
 	logs, err := ctx.client.FilterLogs(timeoutCtx, q)
 	if err != nil {
-		log.Printf("get block error, block: %d, error: %v", blockNo.Uint64(), err)
-		return nil
+		return nil, err
 	}
-	return logs
+	return logs, nil
 }
 
 /*func (ctx *EthContext) GetLog(timeoutCtx context.Context, toAddr common.Address, blockNo *big.Int) []*types.Log {
