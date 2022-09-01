@@ -26,6 +26,6 @@ type Context interface {
 
 	BuildTxOpts(value, gasLimit uint64) (*bind.TransactOpts, error)
 	WaitReceipt(timeoutCtx context.Context, txHash ethcommon.Hash, interval time.Duration) *ethtypes.Receipt
-	GetLog(timeoutCtx context.Context, toAddr ethcommon.Address, blockNo *big.Int) []ethtypes.Log
+	GetLog(timeoutCtx context.Context, toAddr ethcommon.Address, blockNo *big.Int) ([]ethtypes.Log, error)
 	//GetLogs(timeoutCtx context.Context, toAddr common.Address, blockNo *big.Int) []*types.Log
 }
