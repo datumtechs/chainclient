@@ -1,4 +1,4 @@
-module github.com/bglmmz/chainclient
+module github.com/datumtechs/chainclient
 
 go 1.18
 
